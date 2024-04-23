@@ -7,16 +7,34 @@ public enum role
 {
     Ceasar, Supporter, Conspirator
 }
-public class PlayerObject : MonoBehaviour
+public class PlayerObject
 {
     public int playerID;
-    public string playerNickname;
+    public string playerNickname = "";
     public role playerRole;
 
-    public PlayerObject(int PlayerID, string PlayerNickname)
+    public PlayerObject(int playerID)
     {
-        playerID = PlayerID;
-        playerNickname = PlayerNickname;
+        this.playerID = playerID;
+        //playerNickname = PlayerNickname;
+    }
+
+    public int PlayerID
+    {
+        get {return playerID;}
+        set {playerID = value;}
+    }
+
+    public string PlayerNickname
+    {
+        get {return playerNickname;}
+        set {playerNickname = value;}
+    }
+
+    public role PlayerRole
+    {
+        get {return playerRole;}
+        set {playerRole = value;}
     }
 
 }
