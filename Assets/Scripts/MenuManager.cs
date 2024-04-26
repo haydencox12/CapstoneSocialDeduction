@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class createLobby : MonoBehaviour
+public class MenuManager : MonoBehaviour
 {
     public GameObject MainMenu, LobbyMenu, LobbyDisbandConfirmation, go_MainMenuButton;
     public Button m_CreateLobbyButton, m_BacktoMainMenuButton, m_DisbandConfirm, m_DisbandBack;

@@ -5,15 +5,24 @@ using UnityEngine.UI;
 using TMPro;
 using System.Linq;
 
-public class LobbyManger : MonoBehaviour
+public class LobbyManager : MonoBehaviour
 {
     public int lobbyID;
-    List<PlayerObject> PlayerList = new List<PlayerObject>();
+    public List<PlayerObject> PlayerList = new List<PlayerObject>();
     public TMP_Text _Player0, _Player1, _Player2, _Player3, _Player4, _Player5, _Player6, _Player7, _Player8, _Player9, _Player10, _Player11, _GameIDText;
     int search;
-    
-    void Start()
+    public static LobbyManager Instance;
+
+    private void Awake()
     {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
         PlayerList.Add(new PlayerObject(0));
         PlayerList.Add(new PlayerObject(1));
         PlayerList.Add(new PlayerObject(2));
@@ -67,5 +76,35 @@ public class LobbyManger : MonoBehaviour
     PlayerObject getByID(int id)
     {
         return this.PlayerList.FirstOrDefault(z => z.PlayerID == id);
+    }
+
+    public void startTheGame()
+    {
+        int[12] RoleIndexer = {};
+
+        int RoleIndexer2 = 0;
+
+        foreach(PlayerObject player in PlayerList.Where(s.PlayerNickname.ToString() != "" ))
+        {
+            RoleIndexer = RoleIndexer.Append(RoleIndexer2).ToArray();
+            RoleIndexer2++;
+        }
+        
+        int ArrayIndexer;
+        ArrayIndexer = random.next(0, RoleIndexer.Length);
+        int ceasar;
+        int firstsup;
+        int supporter;
+        int conspirator;
+        
+        int RandomNum;
+
+        Random random = new Random();
+        RandomNum = random.Next(0,RoleIndexer.Length);
+        ceasar = RandomNum;
+        RandomNum = random.Next(0,RoleIndexer.Length);
+        firstsup = RandomNum;
+        
+
     }
 }
