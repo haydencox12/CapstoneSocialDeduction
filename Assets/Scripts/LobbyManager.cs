@@ -12,9 +12,14 @@ public class LobbyManager : MonoBehaviour
     public TMP_Text _Player0, _Player1, _Player2, _Player3, _Player4, _Player5, _Player6, _Player7, _Player8, _Player9, _Player10, _Player11, _GameIDText;
     int search;
     public static LobbyManager Instance;
+    int playerCount;
+    
+    //the role array is initalized this way so that when it removes roles, the dictator will always be present and there will always be more supporters than conspirators
+    role[] playerRoleQueue = {role.Dictator, role.Supporter, role.Conspirator, role.Supporter, role.Conspirator, role.Supporter, role.Conspirator, role.Supporter, role.Conspirator, role.Supporter, role.Conspirator, role.Supporter};
 
     private void Awake()
     {
+        
         if (Instance != null)
         {
             Destroy(gameObject);
@@ -35,7 +40,7 @@ public class LobbyManager : MonoBehaviour
         PlayerList.Add(new PlayerObject(9));
         PlayerList.Add(new PlayerObject(10));
         PlayerList.Add(new PlayerObject(11));
-
+        
         getByID(0).PlayerNickname = "Paul";
         
         _Player0.text = getByID(0).PlayerNickname;
@@ -52,6 +57,9 @@ public class LobbyManager : MonoBehaviour
         _Player11.text = getByID(11).PlayerNickname;
         string LobbyID = lobbyID.ToString();
         _GameIDText.text = LobbyID;
+        
+        //tempdebug
+        //startTheGame();
 
     }
 
@@ -78,33 +86,77 @@ public class LobbyManager : MonoBehaviour
         return this.PlayerList.FirstOrDefault(z => z.PlayerID == id);
     }
 
-    public void startTheGame()
+    PlayerObject getByNick(string nick)
     {
-        int[12] RoleIndexer = {};
+        return this.PlayerList.FirstOrDefault(z => z.PlayerNickname == nick);
+    }
 
-        int RoleIndexer2 = 0;
+    public void startTheGame() //assigns random roles
+    {
+        playerCount =0;
+        var PlayerQuery =
+            from player in PlayerList
+            where player.PlayerNickname != ""
+            select player;
 
-        foreach(PlayerObject player in PlayerList.Where(s.PlayerNickname.ToString() != "" ))
+        foreach (PlayerObject player in PlayerQuery) //counts the # of players
         {
-            RoleIndexer = RoleIndexer.Append(RoleIndexer2).ToArray();
-            RoleIndexer2++;
+            playerCount++;
+            Debug.Log("Counted" + playerCount + " players!");
         }
+        Debug.Log("number of players: " + playerCount.ToString());
         
-        int ArrayIndexer;
-        ArrayIndexer = random.next(0, RoleIndexer.Length);
-        int ceasar;
-        int firstsup;
-        int supporter;
-        int conspirator;
-        
-        int RandomNum;
+        //List<role> ActiveRolesList = new List<role>();
+        role[] reducedPlayerList = new role[playerCount];
 
-        Random random = new Random();
-        RandomNum = random.Next(0,RoleIndexer.Length);
-        ceasar = RandomNum;
-        RandomNum = random.Next(0,RoleIndexer.Length);
-        firstsup = RandomNum;
+        int tempPlayerCount = playerCount;
+        int tempCounter = 0;
+        while (tempPlayerCount > 0) //reduces the number of roles to the # of players while ensuring enough of each role is present
+        {
+            //ActiveRolesList.Add(playerRoleQueue[tempCounter]);
+            reducedRoleArray[tempCounter] = playerRoleQueue[tempCounter]; //sets new role array index to the role array value
+            tempCounter++;
+            tempPlayerCount--;
+            Debug.Log("Added role to ActiveRoleList!");
+        }
+        Debug.Log("Added all active roles!");
+        tempCounter = 0;
+        var rng = new Random();
+        rng.Shuffle(reducedRoleArray);
+        foreach (PlayerObject player in PlayerQuery)
+        {
+            //player.playerRole = ActiveRolesList[tempCounter];
+            player.playerRole = reducedRoleArray[tempCounter];
+            tempCounter++;
+            string tempRole = "";
+            switch (player.playerRole)
+            {
+                case role.Dictator:
+                    tempRole = ("Dictator");
+                    break;
+                case role.Supporter:
+                    tempRole = ("Supporter");
+                    break;
+                case role.Conspirator:
+                    tempRole = ("Conspirator");
+                    break;
+            }
+            Debug.Log("Assigned " + player.playerNickname + " the " + tempRole + " role!");
+            
+        }
+        Debug.Log("Completed startTheGame Routine!");
         
+    }
 
+    public static void Shuffle<T> (this Random rng, T[] array)
+    {
+        int n = array.Length;
+        while (n > 1) 
+        {
+            int k = rng.Next(n--);
+            T temp = array[n];
+            array[n] = array[k];
+            array[k] = temp;
+        }
     }
 }

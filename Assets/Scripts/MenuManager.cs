@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
 {
-    public GameObject MainMenu, LobbyMenu, LobbyDisbandConfirmation, go_MainMenuButton;
-    public Button m_CreateLobbyButton, m_BacktoMainMenuButton, m_DisbandConfirm, m_DisbandBack;
+    public GameObject MainMenu, LobbyMenu, LobbyDisbandConfirmation, go_MainMenuButton, LobbyManager;
+    public Button m_CreateLobbyButton, m_BacktoMainMenuButton, m_DisbandConfirm, m_DisbandBack, m_DEBUGStartGameButton;
     
     // Start is called before the first frame update
     void Start()
@@ -15,6 +15,7 @@ public class MenuManager : MonoBehaviour
         m_BacktoMainMenuButton.onClick.AddListener(goToLobbyDisband);
         m_DisbandConfirm.onClick.AddListener(goToMain);
         m_DisbandBack.onClick.AddListener(disbandCancel);
+        m_DEBUGStartGameButton.onClick.AddListener(LobbyManager.GetComponent<LobbyManager>().startTheGame);
     }
 
     // Update is called once per frame

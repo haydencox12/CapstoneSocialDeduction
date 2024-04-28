@@ -5,8 +5,9 @@ using UnityEngine;
 
 public enum role
 {
-    Ceasar, Supporter, Conspirator
+    Dictator, Supporter, Conspirator
 }
+
 public class PlayerObject
 {
     public int playerID;
