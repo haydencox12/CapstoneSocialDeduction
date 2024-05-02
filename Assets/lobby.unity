@@ -534,9 +534,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1052517967}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: GameLogic, Assembly-CSharp
-        m_MethodName: SetupRound
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -909,6 +909,7 @@ MonoBehaviour:
   timer: {fileID: 55601944}
   output: {fileID: 55601946}
   offset: 0
+  AirConsoleObject: {fileID: 0}
 --- !u!4 &1052517968
 Transform:
   m_ObjectHideFlags: 0
