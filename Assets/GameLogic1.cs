@@ -58,10 +58,27 @@ public class GameLogic : MonoBehaviour
     private Dictionary<int, GameObject> playerAvatars = new Dictionary<int, GameObject>();
     private Dictionary<int, bool> playerDead = new Dictionary<int, bool>();
 
+    
     void Awake()
     {
         AirConsole.instance.onMessage += OnMessage;
         AirConsole.instance.onConnect += OnConnect;
+    }
+    
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        
+
+        enoughPlayers = false;
+        answers = new List<GameObject>();
+        avatars = new List<GameObject>();
+  
+        highestAnswers = new List<int>();
+        timerNum = roundTime;
+        startTimer = false;
+        currentRound = -1;
     }
 
     /// <param name="device_id">The device_id that connected</param>
@@ -209,18 +226,7 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        enoughPlayers = false;
-        answers = new List<GameObject>();
-        avatars = new List<GameObject>();
-  
-        highestAnswers = new List<int>();
-        timerNum = roundTime;
-        startTimer = false;
-        currentRound = -1;
-    }
+    
 
     // Update is called once per frame
     void Update()
