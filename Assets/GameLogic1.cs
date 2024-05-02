@@ -7,6 +7,7 @@ using TMPro;
 using System.Linq;
 using System;
 //using UnityEditor.VersionControl;
+using UnityEngine.SceneManagement;
 
 public class GameLogic : MonoBehaviour
 {
@@ -36,6 +37,8 @@ public class GameLogic : MonoBehaviour
     GameObject output;
     [SerializeField]
     float offset;
+    [SerializeField]
+    GameObject AirConsoleObject;
 
     float timerNum;
     int currentRound;
@@ -281,6 +284,13 @@ public class GameLogic : MonoBehaviour
             // Initiate game mode selection by a randomly chosen player
             StartGameModeSelection();  // This should handle selecting the game mode
         }
+    }
+
+    public void backToMainMenu()
+    {
+        AirConsoleObject.GetComponent<AirConsole>().OnDisable();
+        Debug.Log("To the MAIN MENU");
+        SceneManager.LoadScene("MainMenu");
     }
 
     void StartGameModeSelection()

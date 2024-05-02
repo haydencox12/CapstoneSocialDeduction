@@ -1180,7 +1180,8 @@ namespace NDream.AirConsole {
 			StopWebsocketServer ();
 		}
 
-		void OnDisable () {
+		public void OnDisable () {
+			Debug.Log("OnDisable");
 			StopWebsocketServer ();
 		}
 
