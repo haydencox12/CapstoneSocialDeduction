@@ -64,6 +64,8 @@ public class GameLogic : MonoBehaviour
     
     void Awake()
     {
+        AirConsoleObject.GetComponent<AirConsole>().enabled = !AirConsoleObject.GetComponent<AirConsole>().enabled;
+        
         AirConsole.instance.onMessage += OnMessage;
         AirConsole.instance.onConnect += OnConnect;
     }
@@ -288,7 +290,7 @@ public class GameLogic : MonoBehaviour
 
     public void backToMainMenu()
     {
-        AirConsoleObject.GetComponent<AirConsole>().OnDisable();
+        AirConsoleObject.GetComponent<AirConsole>().enabled = !AirConsoleObject.GetComponent<AirConsole>().enabled;
         Debug.Log("To the MAIN MENU");
         SceneManager.LoadScene("MainMenu");
     }

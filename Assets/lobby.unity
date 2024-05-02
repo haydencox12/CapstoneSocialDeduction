@@ -534,9 +534,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 1052517967}
         m_TargetAssemblyTypeName: GameLogic, Assembly-CSharp
-        m_MethodName: 
+        m_MethodName: backToMainMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -909,7 +909,7 @@ MonoBehaviour:
   timer: {fileID: 55601944}
   output: {fileID: 55601946}
   offset: 0
-  AirConsoleObject: {fileID: 0}
+  AirConsoleObject: {fileID: 2011246731}
 --- !u!4 &1052517968
 Transform:
   m_ObjectHideFlags: 0
@@ -949,7 +949,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2011246731}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e37d83ebce05ad74683fd3228dde9e7d, type: 3}
   m_Name: 

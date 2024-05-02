@@ -10,7 +10,7 @@ public class MainMenuController : MonoBehaviour
 
     public void start()
     {
-        m_CreateLobbyButton.onClick.AddListener(createLobby);
+        //m_CreateLobbyButton.onClick.AddListener(createLobby);
     }
     
     public void createLobby()
