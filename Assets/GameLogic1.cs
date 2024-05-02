@@ -1,10 +1,11 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using NDream.AirConsole;
 using Newtonsoft.Json.Linq;
 using TMPro;
 using System.Linq;
+using System;
 using UnityEditor.VersionControl;
 
 public class GameLogic : MonoBehaviour
@@ -52,6 +53,10 @@ public class GameLogic : MonoBehaviour
 
     Dictionary<int, string> playerRoles = new Dictionary<int, string>();
     Dictionary<int, int> votes = new Dictionary<int, int>();
+    private Dictionary<int, string> playerNames = new Dictionary<int, string>();
+    private Dictionary<int, List<string>> playerPreferences = new Dictionary<int, List<string>>();
+    private Dictionary<int, GameObject> playerAvatars = new Dictionary<int, GameObject>();
+    private Dictionary<int, bool> playerDead = new Dictionary<int, bool>();
 
     void Awake()
     {
@@ -67,7 +72,13 @@ public class GameLogic : MonoBehaviour
         GameObject avatarClone = Instantiate(avatar, Vector3.zero, Quaternion.identity, canvasTransform);
         avatarClone.GetComponentInChildren<TextMeshProUGUI>().text = "Player " + numPlayers;
         avatars.Add(avatarClone);
+        playerAvatars[device_id] = avatarClone;
+        
         RepositionList(avatars, 50);
+        JObject message = new JObject();
+        message["action"] = "requestInfo";
+        message["questions"] = GetRandomQuestions();
+        AirConsole.instance.Message(device_id, message);
         // Make sure there are at least two players to start a game with
         if (AirConsole.instance.GetActivePlayerDeviceIds.Count == 0)
         {
@@ -75,6 +86,10 @@ public class GameLogic : MonoBehaviour
             {
                 enoughPlayers = true;
             }
+        }
+        if (!playerDead.ContainsKey(device_id))
+        {
+            playerDead.Add(device_id, false);
         }
     }
 
@@ -138,6 +153,38 @@ public class GameLogic : MonoBehaviour
             }
         }
 
+        if (data["action"] != null && data["action"].ToString() == "submitInfo")
+        {
+            // Store the player's name and preferences
+            string playerName = data["name"].ToString();
+            playerNames[fromDeviceID] = playerName;
+
+            List<string> preferences = new List<string>
+            {
+                data["answer1"].ToString(),
+                data["answer2"].ToString()
+            };
+            playerPreferences[fromDeviceID] = preferences;
+
+            // Update the player's display name in Unity
+            UpdatePlayerName(fromDeviceID, playerName);
+
+            // Confirm setup completion to the player
+            JObject response = new JObject();
+            response["action"] = "allSet";
+            AirConsole.instance.Message(fromDeviceID, response);
+
+            UpdateAndBroadcastPlayerData();
+        }
+
+        if (data["action"] != null && data["action"].ToString() == "assassinKill")
+        {
+            int targetPlayerId = data["playerId"].ToObject<int>();
+            KillPlayer(targetPlayerId, fromDeviceID);
+        }
+
+
+
         if (data["vote"] != null)
         {
             int i = 0;
@@ -185,9 +232,12 @@ public class GameLogic : MonoBehaviour
             timerText.text = timerNum.ToString("F0");
             if (timerNum <= 0)
             {
-                InitiateVoting();  
+                StartVoting();  
+
                 // Call the method to initiate voting
                 startTimer = false;
+                timerNum = 10;
+
             }
            
         }
@@ -219,6 +269,8 @@ public class GameLogic : MonoBehaviour
             SendBroadcast("SetupRound");
             AssignRoles();
             BroadcastRoles();
+            
+
 
             // Initiate game mode selection by a randomly chosen player
             StartGameModeSelection();  // This should handle selecting the game mode
@@ -231,7 +283,7 @@ public class GameLogic : MonoBehaviour
         if (deviceIds.Count == 0) return;
 
         // Randomly select a player to choose the game mode
-        int selectorIndex = Random.Range(0, deviceIds.Count);
+        int selectorIndex = UnityEngine.Random.Range(0, deviceIds.Count);
         int selectorDeviceId = deviceIds[selectorIndex];
         controllingID = selectorDeviceId;  // Store the ID of the player who controls the game mode selection
 
@@ -264,6 +316,16 @@ public class GameLogic : MonoBehaviour
         }
     }
 
+    void UpdatePlayerName(int deviceId, string playerName)
+    {
+        playerNames[deviceId] = playerName;
+        if (playerAvatars.ContainsKey(deviceId))
+        {
+            playerAvatars[deviceId].GetComponentInChildren<TextMeshProUGUI>().text = playerName;
+        }
+
+    }
+
 
     void StartGameWithMode(int mode)
     {
@@ -273,6 +335,24 @@ public class GameLogic : MonoBehaviour
         timer.SetActive(true);
         startTimer = true;  // Continue to setup the round as needed
 
+    }
+
+    void SendAssassinMenu(int assassinId)
+    {
+        // Get a list of players who are still alive except the assassin
+        var alivePlayers = playerNames.Where(p => p.Key != assassinId && !playerDead[p.Key])
+                                      .Select(p => new { id = p.Key, name = p.Value })
+                                      .ToList();
+
+        // Create a message object to send
+        JObject message = new JObject
+        {
+            ["action"] = "showAssassinMenu",
+            ["players"] = JToken.FromObject(alivePlayers) // List of alive players
+        };
+
+        // Send this message only to the assassin's device
+        AirConsole.instance.Message(assassinId, message);
     }
 
     string GetGameModeName(int mode)
@@ -301,11 +381,11 @@ public class GameLogic : MonoBehaviour
         }
 
         // Randomly select an index for the leader and assassin
-        int leaderIndex = Random.Range(0, totalPlayers);
+        int leaderIndex = UnityEngine.Random.Range(0, totalPlayers);
         int assassinIndex;
         do
         {
-            assassinIndex = Random.Range(0, totalPlayers);
+            assassinIndex = UnityEngine.Random.Range(0, totalPlayers);
         } while (assassinIndex == leaderIndex); // Ensure the assassin and leader are not the same player
 
         for (int i = 0; i < totalPlayers; i++)
@@ -371,15 +451,6 @@ public class GameLogic : MonoBehaviour
         SendBroadcast("SetupRound");
     }
 
-    void InitiateVoting()
-    {
-        votes.Clear(); // Clear previous votes
-        outputText.text = "Voting has started. Look at your screens to vote.";
-        JObject message = new JObject();
-        message["action"] = "startVoting";
-        AirConsole.instance.Broadcast(message);
-        // Set up a timer to end voting if needed or wait for all votes to come in
-    }
 
     void CheckIfAllVotesAreIn()
     {
@@ -397,9 +468,71 @@ public class GameLogic : MonoBehaviour
 
     void ProcessVotingResult(int playerId, bool isAssassin)
     {
-        outputText.text = $"Player {playerId} received the most votes. They are {(isAssassin ? "" : "not ")}the assassin.";
+        // Check if the player ID exists in the dictionary to prevent errors
+        if (playerNames.ContainsKey(playerId))
+        {
+            // Access the player's name using the playerId as the key in the dictionary
+            string playerName = playerNames[playerId];
+            outputText.text = $"Player {playerName} received the most votes. They are {(isAssassin ? "" : "not ")}the assassin.";
+        }
+        else
+        {
+            // Handle cases where the player ID is not found (fallback or error message)
+            outputText.text = "Error: Player not found.";
+        }
+
         StartCoroutine(DisplayResults(isAssassin));
     }
+
+    void KillPlayer(int targetPlayerId, int assassinId)
+    {
+        playerDead[targetPlayerId] = true; // Assume playerDead is a Dictionary<int, bool>
+        string assassinName = playerNames[assassinId];
+        string targetName = playerNames[targetPlayerId];
+        UpdateGameAfterDeath(targetPlayerId);
+        outputText.text = $"{targetName} has been killed.";
+
+        // Further game logic to handle the player's death
+    }
+
+    void StartVoting()
+    {
+        var alivePlayers = playerNames.Where(p => !playerDead[p.Key])
+                                  .Select(p => new { id = p.Key, name = p.Value })
+                                  .ToList();
+        votes.Clear();
+        outputText.text = "Voting has started. Look at your screens to vote.";
+        List<JObject> playerData = new List<JObject>();
+        foreach (var player in playerNames) // Assuming playerNames contain all players
+        {
+            if (!playerDead[player.Key]) // Assuming playerDead tracks whether a player is alive
+            {
+                playerData.Add(new JObject {
+                {"id", player.Key},
+                {"name", player.Value}
+            });
+            }
+        }
+
+        // Broadcast voting options to all players
+        JObject message = new JObject
+        {
+            ["action"] = "startVoting",
+            ["players"] = new JArray(playerData)
+        };
+        AirConsole.instance.Broadcast(message);
+
+        int assassinId = playerRoles.FirstOrDefault(x => x.Value == "Assassin").Key;
+        if (assassinId != 0) // Check if assassinId is found
+        {
+            SendAssassinMenu(assassinId);
+        }
+
+    }
+
+
+
+
 
     IEnumerator DisplayResults(bool isAssassin)
     {
@@ -429,6 +562,52 @@ public class GameLogic : MonoBehaviour
             i++;
         }
     }
-}
+
+    void UpdateGameAfterDeath(int playerId)
+    {
+        // Create a message to send to the dead player's device
+        JObject message = new JObject
+        {
+            ["action"] = "showDeathScreen",
+            ["playerId"] = playerId
+        };
+        AirConsole.instance.Message(playerId, message);
+    }
+
+    void UpdateAndBroadcastPlayerData()
+    {
+        List<JObject> playerData = new List<JObject>();
+        foreach (var kvp in playerNames)
+        {
+            playerData.Add(new JObject {
+            {"id", kvp.Key},
+            {"name", kvp.Value}
+        });
+        }
+
+        JObject message = new JObject();
+        message["action"] = "updatePlayerData";
+        message["players"] = new JArray(playerData);
+
+        AirConsole.instance.Broadcast(message);
+    }
+    JArray GetRandomQuestions()
+    {
+        List<string> questions = new List<string>
+        {
+            "What is your favorite animal?",
+            "What is your favorite color?",
+            "What is your favorite food?"
+        };
+
+        // Shuffle and pick two random questions
+        var selectedQuestions = questions.OrderBy(q => Guid.NewGuid()).Take(2).ToList();
+        return new JArray(selectedQuestions[0], selectedQuestions[1]);
+        }
+    
+    }
+
+
+
 
 
