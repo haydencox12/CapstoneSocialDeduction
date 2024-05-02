@@ -1174,7 +1174,7 @@ namespace NDream.AirConsole {
 			}
 		#endif
 		}
-
+		
 		void OnApplicationQuit () {
 			Debug.Log("OnApplicationQuit");
 			StopWebsocketServer ();
