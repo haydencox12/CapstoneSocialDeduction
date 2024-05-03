@@ -704,11 +704,11 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-  cloudProjectId: 1e658794-efff-466e-a502-25248a01bae2
+  cloudProjectId: 9de151d0-5a0b-4c2a-ba20-d23e87e1b3f9
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: cloak
-  organizationId: haydencox54_unity
+  projectName: My project
+  organizationId: devlandry23
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
