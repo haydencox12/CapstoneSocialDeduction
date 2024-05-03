@@ -6,8 +6,10 @@ using Newtonsoft.Json.Linq;
 using TMPro;
 using System.Linq;
 using System;
-
-
+using System.ComponentModel;
+//using UnityEditor.VersionControl;
+//using static UnityEngine.GraphicsBuffer;
+//using System.Security.Cryptography;
 
 
 public class GameLogic : MonoBehaviour
@@ -46,16 +48,16 @@ public class GameLogic : MonoBehaviour
     int currentRound;
     List<GameObject> answers;
     List<GameObject> avatars;
-
+    
     List<int> highestAnswers;
 
 
-
+    
     bool enoughPlayers;
     int numPlayers;
     bool startTimer;
     int gameMode;
-
+    
 
 
     Dictionary<int, string> playerRoles = new Dictionary<int, string>();
@@ -73,7 +75,7 @@ public class GameLogic : MonoBehaviour
     }
 
 
-    /// <param name="device_id">The device_id that connected</param>
+    
     void OnConnect(int device_id)
     {
         numPlayers++;
@@ -82,7 +84,7 @@ public class GameLogic : MonoBehaviour
         avatarClone.GetComponentInChildren<TextMeshProUGUI>().text = "Player " + numPlayers;
         avatars.Add(avatarClone);
         playerAvatars[device_id] = avatarClone;
-
+        
         RepositionList(avatars, 50);
         JObject message = new JObject();
         message["action"] = "requestInfo";
@@ -91,7 +93,7 @@ public class GameLogic : MonoBehaviour
         // Make sure there are at least two players to start a game with
         if (AirConsole.instance.GetActivePlayerDeviceIds.Count == 0)
         {
-            if (AirConsole.instance.GetControllerDeviceIds().Count >= 1)
+            if (AirConsole.instance.GetControllerDeviceIds().Count >= 3)
             {
                 enoughPlayers = true;
             }
@@ -105,9 +107,9 @@ public class GameLogic : MonoBehaviour
 
     void OnMessage(int fromDeviceID, JToken data)
     {
-        if (data["action"] != null)
+        if(data ["action"] != null)
         {
-            if (data["action"].ToString().Equals("fromDevice"))
+            if(data["action"].ToString().Equals("fromDevice"))
             {
                 outputText.text = "message from " + fromDeviceID + ", data: " + data;
             }
@@ -118,7 +120,7 @@ public class GameLogic : MonoBehaviour
                 SendMessageToDevice(controllingID, "TakenControl");
             }
         }
-        if (data["input"] != null)
+        if(data ["input"] != null)
         {
             if (currentRound != -1)
             {
@@ -209,9 +211,9 @@ public class GameLogic : MonoBehaviour
         if (data["vote"] != null)
         {
             int i = 0;
-            foreach (GameObject answer in answers)
+            foreach(GameObject answer in answers)
             {
-                if (answer.GetComponentInChildren<TextMeshProUGUI>().text.Equals(data["vote"].ToString()))
+                if(answer.GetComponentInChildren<TextMeshProUGUI>().text.Equals(data["vote"].ToString()))
                 {
                     votes[i]++;
                 }
@@ -228,7 +230,7 @@ public class GameLogic : MonoBehaviour
         enoughPlayers = false;
         answers = new List<GameObject>();
         avatars = new List<GameObject>();
-
+        StartCoroutine(DelayedStart());
         highestAnswers = new List<int>();
         timerNum = roundTime;
         startTimer = false;
@@ -236,8 +238,13 @@ public class GameLogic : MonoBehaviour
     }
 
 
-    // Update is called once per frame
-    void Update()
+    private IEnumerator DelayedStart()
+    {
+        // Wait for 13 seconds
+        yield return new WaitForSeconds(13f);
+    }
+        // Update is called once per frame
+        void Update()
     {
         // Only run the timer after the game has started and there are still more rounds
         if (startTimer && currentRound <= totalRounds)
@@ -246,7 +253,7 @@ public class GameLogic : MonoBehaviour
             timerText.text = timerNum.ToString("F0");
             if (timerNum <= 0)
             {
-                StartVoting();
+                StartVoting();  
 
 
                 // Call the method to initiate voting
@@ -255,7 +262,7 @@ public class GameLogic : MonoBehaviour
 
 
             }
-
+           
         }
     }
 
@@ -288,7 +295,7 @@ public class GameLogic : MonoBehaviour
             SendBroadcast("SetupRound");
             AssignRoles();
             BroadcastRoles();
-
+            
 
 
 
@@ -398,7 +405,7 @@ public class GameLogic : MonoBehaviour
             case 1:
                 StartPointBreakMode();
                 return "Point Break";
-            case 2:
+            case 2: 
                 StartPeakorPlummetMode();
                 return "Peak or Plummet";
 
@@ -469,24 +476,24 @@ public class GameLogic : MonoBehaviour
 
     void StartRound()
     {
-
+        
         // Update the header for the selected story type
         if (currentRound == 0)
         {
-            switch (gameMode)
+            switch(gameMode)
             {
-
+               
             }
         }
         // Adding the answer to the main output
         else
         {
-            outputText.text += "\n";
+            outputText.text += "\n" ;
             // Repositioning the main text to *try* to keep everything on the screen
             outputText.transform.position += new Vector3(0, offset, 0);
         }
         // Reset the answers and voting
-        for (int i = 0; i < answers.Count; i++)
+        for(int i = 0; i < answers.Count; i++)
         {
             Destroy(answers[i]);
         }
@@ -497,7 +504,7 @@ public class GameLogic : MonoBehaviour
         currentRound++;
         timerNum = roundTime;
         // Show a different header for each round based on the story type
-
+        
         controllingID = -1;
         SendBroadcast("Reset");
         SendBroadcast("SetupRound");
@@ -525,76 +532,138 @@ public class GameLogic : MonoBehaviour
     {
         // Check if the player ID exists in the dictionary to prevent errors
         if (playerNames.ContainsKey(playerId))
+
+
         {
-            // Access the player's name using the playerId as the key in the dictionary
             string playerName = playerNames[playerId];
-            outputText.text = $"Player {playerName} received the most votes. They are {(isAssassin ? "" : "not ")}the assassin.";
+            if (isAssassin)
+            {
+                outputText.text = $"Player {playerName} received the most votes. They are {(isAssassin ? "" : "not ")}the assassin.";
+            }
+            else
+            {
+                outputText.text = $"Player {playerName} received the most votes. They are {(isAssassin ? "" : "not ")}the assassin.";
+                CheckAssassinAttackOutcome(playerId, isAssassin);
+
+
+            }
+
+
+            if (!isAssassin && !playerDead[playerId])
+            {
+                int leaderId = playerRoles.FirstOrDefault(x => x.Value == "Leader").Key;
+                int assassinId = playerRoles.FirstOrDefault(x => x.Value == "Assassin").Key;
+
+
+                if (leaderId != 0 && assassinId != 0)
+                {
+                    SendQuestionsToEachOther(leaderId, assassinId);
+                }
+            }
+            // Access the player's name using the playerId as the key in the dictionary
+
+
         }
-        else
+
+
+        void CheckAssassinAttackOutcome(int votedPlayerId, bool isAssassin)
         {
-            // Handle cases where the player ID is not found (fallback or error message)
-            outputText.text = "Error: Player not found.";
+            int assassinId = playerRoles.FirstOrDefault(p => p.Value == "Assassin").Key;
+            int leaderId = playerRoles.FirstOrDefault(p => p.Value == "Leader").Key;
+
+
+            if (assassinId != leaderId && !isAssassin)
+            {
+                // Assassin did not kill the leader and was not found, exchange questions
+                SendQuestions(assassinId, leaderId);
+            }
         }
 
 
         StartCoroutine(DisplayResults(isAssassin));
+
+
+        if (pendingAssassinKill != -1)
+        {
+            ConfirmAssassinKill(pendingAssassinKill);
+            pendingAssassinKill = -1;  // Reset for next round
+        }
     }
 
 
+    private int pendingAssassinKill = -1;
     void KillPlayer(int targetPlayerId, int assassinId)
     {
-        playerDead[targetPlayerId] = true; // Assume playerDead is a Dictionary<int, bool>
-        string assassinName = playerNames[assassinId];
-        string targetName = playerNames[targetPlayerId];
-        UpdateGameAfterDeath(targetPlayerId);
-        outputText.text = $"{targetName} has been killed.";
-
-
-        // Further game logic to handle the player's death
+        pendingAssassinKill = targetPlayerId;
     }
 
 
     void StartVoting()
     {
-        var alivePlayers = playerNames.Where(p => !playerDead[p.Key])
-                                  .Select(p => new { id = p.Key, name = p.Value })
-                                  .ToList();
-        votes.Clear();
         outputText.text = "Voting has started. Look at your screens to vote.";
-        List<JObject> playerData = new List<JObject>();
-        foreach (var player in playerNames) // Assuming playerNames contain all players
+        // Iterate through each player to send them personalized voting data
+        foreach (var currentPlayer in playerNames)
         {
-            if (!playerDead[player.Key]) // Assuming playerDead tracks whether a player is alive
+            if (!playerDead[currentPlayer.Key]) // Ensure the player is alive
             {
-                playerData.Add(new JObject {
-                {"id", player.Key},
-                {"name", player.Value}
-            });
+                List<JObject> playerData = new List<JObject>();
+                // Create a list excluding the current player
+                foreach (var potentialVoteTarget in playerNames)
+                {
+                    if (potentialVoteTarget.Key != currentPlayer.Key && !playerDead[potentialVoteTarget.Key])
+                    {
+                        playerData.Add(new JObject {
+                        {"id", potentialVoteTarget.Key},
+                        {"name", potentialVoteTarget.Value}
+                    });
+                    }
+                }
+
+
+                // Send the personalized list to the current player
+                JObject message = new JObject
+                {
+                    ["action"] = "startVoting",
+                    ["players"] = new JArray(playerData)
+                };
+                AirConsole.instance.Message(currentPlayer.Key, message);
             }
         }
 
 
-        // Broadcast voting options to all players
-        JObject message = new JObject
-        {
-            ["action"] = "startVoting",
-            ["players"] = new JArray(playerData)
-        };
-        AirConsole.instance.Broadcast(message);
-
-
         int assassinId = playerRoles.FirstOrDefault(x => x.Value == "Assassin").Key;
-
-
         SendAssassinMenu(assassinId);
-
-
-
     }
 
 
+    void SendQuestions(int assassinId, int leaderId)
+    {
+        JObject messageToAssassin = new JObject
+        {
+            ["action"] = "receiveQuestion",
+            ["question"] = playerPreferences[leaderId][UnityEngine.Random.Range(0, playerPreferences[leaderId].Count)] // Randomly pick one of the leader's questions
+        };
+        AirConsole.instance.Message(assassinId, messageToAssassin);
 
 
+        JObject messageToLeader = new JObject
+        {
+            ["action"] = "receiveQuestion",
+            ["question"] = playerPreferences[assassinId][UnityEngine.Random.Range(0, playerPreferences[assassinId].Count)] // Randomly pick one of the assassin's questions
+        };
+        AirConsole.instance.Message(leaderId, messageToLeader);
+    }
+
+
+    void ConfirmAssassinKill(int targetPlayerId)
+    {
+        playerDead[targetPlayerId] = true;  // Now officially mark the player as dead
+        string targetName = playerNames[targetPlayerId];
+        // Now display the death message
+        outputText.text = $"{targetName} has been killed.";
+        // Further process like updating UI or game states
+        UpdateGameAfterDeath(targetPlayerId);
+    }
 
 
 
@@ -603,16 +672,22 @@ public class GameLogic : MonoBehaviour
 
     IEnumerator DisplayResults(bool isAssassin)
     {
+
+
         yield return new WaitForSeconds(3); // Show results for 3 seconds
         if (isAssassin)
         {
+
+
             outputText.text = "The Assassin has been found. Game over.";
             yield return new WaitForSeconds(3);
             // Optionally reset the game or return to main menu
         }
         else
         {
-            outputText.text = "Incorrect guess. The game continues...";
+            
+            yield return new WaitForSeconds(3);
+            outputText.text = "Incorrect guess. The assassin still remains. The game continues...";
             yield return new WaitForSeconds(3);
             StartGameModeSelection(); // Restart game mode selection
         }
@@ -623,7 +698,7 @@ public class GameLogic : MonoBehaviour
     {
         // Evenly spaces out the players and the answers on the screen horizontally
         int i = 1;
-        foreach (GameObject item in list)
+        foreach(GameObject item in list)
         {
             RectTransform itemRect = item.GetComponent<RectTransform>();
             itemRect.SetPositionAndRotation(new Vector3(((Screen.width / (list.Count + 1)) * i), height, 0), Quaternion.identity);
@@ -634,11 +709,23 @@ public class GameLogic : MonoBehaviour
 
     void UpdateGameAfterDeath(int playerId)
     {
-        // Create a message to send to the dead player's device
+        if(playerAvatars.ContainsKey(playerId)) {
+            GameObject avatar = playerAvatars[playerId];
+            Destroy(avatar);  // Remove the avatar from the scene
+            playerAvatars.Remove(playerId);  // Clean up the dictionary
+        }
+
+
+        // Send a message to the player's device to show the "Game Over" screen
+        SendGameOverScreen(playerId);
+    }
+
+
+    void SendGameOverScreen(int playerId)
+    {
         JObject message = new JObject
         {
-            ["action"] = "showDeathScreen",
-            ["playerId"] = playerId
+            ["action"] = "showGameOverScreen"
         };
         AirConsole.instance.Message(playerId, message);
     }
@@ -668,13 +755,47 @@ public class GameLogic : MonoBehaviour
     void StartTruthAndLiesMode()
     {
         List<string> truthAndLiesPrompts = new List<string>()
-        {
+        {       
             "Raise your hand if you’ve ever been to Europe.",
             "Raise your hand if you’ve ever skipped school.",
-            "Raise your hand if you’ve ever seen a shooting star."
-        };
-        // Randomize prompts or select a specific one
-        var selectedPrompt = truthAndLiesPrompts[UnityEngine.Random.Range(0, truthAndLiesPrompts.Count)];
+            "Raise your hand if you’ve ever seen a shooting star.",
+            "Raise your hand if you’ve ever run a marathon.",
+            "Raise your hand if you’ve ever cooked a meal for more than 10 people.",
+            "Raise your hand if you’ve ever been on TV.",
+            "Raise your hand if you’ve ever met a celebrity.",
+            "Raise your hand if you’ve ever lived in another country.",
+            "Raise your hand if you’ve ever gone skydiving.",
+            "Raise your hand if you’ve ever learned to play a musical instrument.",
+            "Raise your hand if you’ve ever forgotten a close friend's or family member's birthday.",
+            "Raise your hand if you’ve ever been to a concert.",
+            "Raise your hand if you’ve ever had a friendship that lasted more than 10 years.",
+            "Raise your hand if you’ve ever donated blood.",
+            "Raise your hand if you like sushi.",
+            "Raise your hand if you like Marvel more than DC",
+            "Raise your hand if you've ever been to Disneyland",
+            "Raise your hand if you've ever tried sushi.",
+            "Raise your hand if you've ever taken a cooking class.",
+            "Raise your hand if you've ever participated in a talent show.",
+            "Raise your hand if you've ever taken part in a food eating contest.",
+            "Raise your hand if you've ever watched all the 'Star Wars' movies in order.",
+            "Raise your hand if you've ever read all the books in the 'Harry Potter' series.",
+            "Raise your hand if you've ever learned a dance from a music video.",
+            "Raise your hand if you've ever collected action figures.",
+            "Raise your hand if you've ever met a NBA player.",
+            "Raise your hand if your favorite sports team has won a championship.",
+            "Raise your hand if you think ranch is better than ketchup.",
+            "Raise your hand if you've ever lined up for a limited edition sneaker or apparel release.",
+            "Raise your hand if you've ever participated in a fantasy sports league",
+            "Raise your hand if you've ever visited a filming location of a popular show or movie."
+            };
+
+
+
+
+
+
+    // Randomize prompts or select a specific one
+    var selectedPrompt = truthAndLiesPrompts[UnityEngine.Random.Range(0, truthAndLiesPrompts.Count)];
 
 
         // Broadcast the selected prompt to all players except the assassin
@@ -715,8 +836,25 @@ public class GameLogic : MonoBehaviour
             "Point at the person who would survive the longest on a deserted island.",
             "Point at the person who would most likely to talk their way out of a tricky situation.",
             "Point at the person who would throw the best party.",
-            "Point at the person with the longest hair."
-
+            "Point at the person with the longest hair.",
+            "Point at the person who would survive the longest in a zombie apocalypse.",
+            "Point at the person who is most likely to try exotic foods.",
+            "Point at the person who is most likely to win at trivia night.",
+            "Point at the person who is always taking photos",
+            "Point at the person with the coolest shoes.",
+            "Point at the person who looks like they could be a morning TV show host.",
+            "Point at the person who is most likely to be found at a coffee shop.",
+            "Point at the person with the neatest handwriting.",
+            "Point at the person who is most likely to own a pet snake.",
+            "Point at the person who is wearing the most jewelry.",
+            "Point at the person who always seems to have the latest tech gadget.",
+            "Point at the person most likely to go hiking every weekend.",
+            "Point at the person who is always the first to try new restaurants.",
+            "Point at the person who is most likely to finish a puzzle the fastest.",
+            "Point at the person who is always telling jokes.",
+            "Point at the person most likely to have a song for every situation.",
+            "Point at the person who would be the best at organizing a group trip.",
+            "Point at the person who seems like they could have been a pirate in another life."
         };
         // Randomize prompts or select a specific one
         var selectedPrompt = PointBreakPrompts[UnityEngine.Random.Range(0, PointBreakPrompts.Count)];
@@ -760,7 +898,25 @@ public class GameLogic : MonoBehaviour
             "Indicate higher or lower if you have visited more than 5.5 countries..",
             "Indicate higher or lower if you spend more than 2.5 hours per day on social media.",
             "Indicate higher or lower if you exercise more than 4 times a week.",
-            "Indicate higher or lower if you've ever watched more than 4.5 movies in a single day."
+            "Indicate higher or lower if you've ever watched more than 4.5 movies in a single day.",
+            "Indicate higher or lower if you've ever spent more than 2 hours on a phone call.",
+            "Indicate higher or lower if you've ever cooked meals for more than 10 people at once.",
+            "Indicate higher or lower if you've ever collected more than 50 items of any collectible.",
+            "Indicate higher or lower if you've ever slept for more than 12 hours in a stretch.",
+            "Indicate higher or lower if you've ever visited more than 3 museums.",
+            "Indicate higher or lower if 3 drinks get you buzzed.",
+            "Indicate higher or lower if you've ever visited more than 3 museums in a day.",
+            "Indicate higher or lower if you've ever attended more than 5 weddings in a year.",
+            "Indicate higher or lower if you've ever done more than 20 push-ups in a row.",
+            "Indicate higher or lower if you've ever watched more than 6 hours of YouTube in a single day.",
+            "Indicate higher or lower if you've ever spent more than 4 hours cooking a single meal.",
+            "Indicate higher or lower if you've ever had more than 6 different jobs in your life.",
+            "Indicate higher or lower if you've ever run more than 5 miles at once.",
+            "Indicate higher or lower if you've ever spent more than $200 on a single shopping trip."
+
+
+
+
 
 
         };
@@ -798,6 +954,37 @@ public class GameLogic : MonoBehaviour
     }
 
 
+    void SendQuestionsToEachOther(int leaderId, int assassinId)
+    {
+        if (playerPreferences.ContainsKey(leaderId) && playerPreferences.ContainsKey(assassinId))
+        {
+            // Retrieve the questions
+            List<string> leaderQuestions = playerPreferences[leaderId];
+            List<string> assassinQuestions = playerPreferences[assassinId];
+
+
+            // Construct messages
+            JObject leaderMessage = new JObject
+            {
+                ["action"] = "receiveQuestions",
+                ["questions"] = new JArray(assassinQuestions.ToArray())
+            };
+
+
+            JObject assassinMessage = new JObject
+            {
+                ["action"] = "receiveQuestions",
+                ["questions"] = new JArray(leaderQuestions.ToArray())
+            };
+
+
+            // Send messages
+            AirConsole.instance.Message(leaderId, leaderMessage);
+            AirConsole.instance.Message(assassinId, assassinMessage);
+        }
+    }
+
+
     void StartCountMeInMode()
     {
         List<string> CountMeInPrompts = new List<string>()
@@ -806,9 +993,21 @@ public class GameLogic : MonoBehaviour
             "Hold up how many concerts you've attended.",
             "Hold up the number of pets you have at home.",
             "Hold up how many countries you've visited.",
-            "Hold up how many cars you've owned."
-
-
+            "Hold up how many cars you've owned.",
+            "Hold up the number of sports you've played.",
+            "Hold up the number of times you've been on a plane.",
+            "Hold up the number of tattoos you have.",
+            "Hold up the number of times you've seen your favorite movie.",
+            "Hold up the number of bicycles you own.",
+            "Hold up the number of hours you typically sleep each night.",
+            "Hold up the number of apps you use daily on your phone.",
+            "Hold up how many times you've been to the ocean.",
+            "Hold up the number of musicals you've seen.",
+            "Hold up how many times you've volunteered for a charity.",
+            "Hold up the number of live sports events you've attended in the last month.",
+            "Hold up how many languages are spoken in your family.",
+            "Hold up how many pairs of sunglasses you own.",
+            "Hold up the number of times you eat out in a week.",
         };
         // Randomize prompts or select a specific one
         var selectedPrompt = CountMeInPrompts[UnityEngine.Random.Range(0, CountMeInPrompts.Count)];
@@ -851,7 +1050,7 @@ public class GameLogic : MonoBehaviour
     IEnumerator ShowGoCountdown()
     {
         yield return new WaitForSeconds(3); // Wait for 3 seconds
-        outputText.text = "Go!";
+        outputText.text = "Look at your device";
         yield return new WaitForSeconds(10); // Show "GO!" for 10 seconds
         StartVoting();
     }
@@ -870,6 +1069,6 @@ public class GameLogic : MonoBehaviour
         // Shuffle and pick two random questions
         var selectedQuestions = questions.OrderBy(q => Guid.NewGuid()).Take(2).ToList();
         return new JArray(selectedQuestions[0], selectedQuestions[1]);
+        }
+    
     }
-
-}
