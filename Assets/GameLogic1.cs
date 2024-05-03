@@ -91,7 +91,7 @@ public class GameLogic : MonoBehaviour
         // Make sure there are at least two players to start a game with
         if (AirConsole.instance.GetActivePlayerDeviceIds.Count == 0)
         {
-            if (AirConsole.instance.GetControllerDeviceIds().Count >= 2)
+            if (AirConsole.instance.GetControllerDeviceIds().Count >= 1)
             {
                 enoughPlayers = true;
             }
