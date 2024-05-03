@@ -1,349 +1,469 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloak & Dagger</title>
-  <style>
-    /* Knightly Styles */
-    body {
-      background-color: #f0e6d2; /* Parchment */
-      font-family: 'Garamond', serif;
-      margin: 0;
-      padding: 0;
-    }
-    h1 {
-      text-align: center;
-      color: #3d2c1d; /* Dark Brown */
-<<<<<<< Updated upstream
-=======
-      font-size: 42px;
-      margin-top: 10px;
->>>>>>> Stashed changes
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-<<<<<<< Updated upstream
-      padding: 20px;
-    }
-    .btn {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #b99f6c; /* Gold */
-      color: #3d2c1d; /* Dark Brown */
-      font-size: 18px;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-      transition: background-color 0.3s ease;
-    }
-=======
-      padding: 10px;
-      margin-top: 0.5in; /* Adjust the margin-top as needed */
-      display: flex; /* Make it a flex container */
-      flex-direction: column; /* Align items vertically */
-      align-items: center; /* Center items horizontally */
-    }
-    .btn {
-  display: block; /* Change display property to block to occupy full width */
-  width: 100%; /* Make the button occupy full width */
-  margin-top: 10px; /* Add margin between the button and input fields */
-  padding: 15px 20px; /* Increase padding to make the button bigger */
-  background-color: #b99f6c; /* Gold */
-  color: #3d2c1d; /* Dark Brown */
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
-}
->>>>>>> Stashed changes
-    .btn:hover {
-      background-color: #8b774f; /* Dark Gold */
-    }
-    .hidden {
-      display: none;
-    }
-<<<<<<< Updated upstream
-=======
-    .logo {
-      text-align: center;
-      
-    }
-    .logo img {
-      width: 150px; /* Adjust the width as needed */
-      
-    }
-    .inputForm {
-      text-align: center; /* Center the content horizontally */
-    }
->>>>>>> Stashed changes
-  </style>
-  <script src="https://www.airconsole.com/api/airconsole-1.7.0.js"></script>
-  <script>
-    var airconsole;
-    var playersData = [];
-
-    function App() {
-      airconsole = new AirConsole({"orientation": "portrait"});
-
-      airconsole.onMessage = function (device_id, data) {
-        if (data.action) {
-          switch (data.action) {
-            case "assignRole":
-              document.getElementById('roleDisplay').innerText = "Your Role: " + data.role;
-              document.getElementById('roleDisplay').classList.remove('hidden');
-              break;
-            case "Reset":
-              document.getElementById('roleDisplay').classList.add('hidden');
-              // handle other actions as previously
-              break;
-            case "chooseGameMode":
-              displayGameModeChoices();
-              break;
-            case "wait":
-              displayWaitMessage("Please wait for the game mode selection...");
-              break;
-            case "showAssassinMenu":
-              if (airconsole.getDeviceId() === from) { // Ensuring only the assassin sees this
-                displayAssassinMenu(data.players);
-              }
-              break;
-            case "hideGameModeSelection":
-              hideGameModeSelection();  // Hide the game mode selection interface
-              break;
-            case "startVoting":
-              if (data.players) { 
-                // Assume data includes list of players and the ID of the current player
-                displayVotingOptions(data.players);
-              }
-              break;
-            case "hideVoting":
-              hideVotingOptions();
-              break;
-            case "updatePlayerData":
-              updateLocalPlayerData(data.players);
-              break;
-            case "updatePlayerStatus":
-              updatePlayerStatus(data.players);
-              break;
-            case "allSet":
-              document.getElementById('message-display').innerText = "All set!!";
-              break;
-          }
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>Cloak & Dagger</title>
+    <script type="text/javascript" src="https://www.airconsole.com/api/airconsole-1.7.0.js"></script>
+    <style type=text/css>
+        /* Knightly Styles */
+        #input {
+            /*display: none;*/
         }
 
-        document.getElementById('takeControl').classList.add('hidden');
-        if(data == "TakenControl") {
-          document.getElementById('send').classList.remove('hidden');
-        }
-        // Removes the voting buttons and shows the send button again
-        if(data == "Reset") {
-          document.getElementById('send').classList.remove('hidden');
-          document.getElementById('parentNode').remove();
-        }
-        // Removes the send button after sending a message
-        if(data == "Sent") {
-          document.getElementById('send').classList.add('hidden');
-        }
-        // Removes the voting buttons after voting
-        if(data == "Voted") {
-          document.getElementById('parentNode').remove();
-        }
-        // Adds a paragraph tag for the voting buttons to append to
-        if(data == "SetupRound") {
-          var parentNode = document.createElement("p");
-          parentNode.id = "parentNode";
-          var body = document.getElementsByTagName("body")[0];
-          body.appendChild(parentNode);
-        }
-        // Adds a voting button if the message isn't recognized
-        if(data != "Reset" && data != "TakenControl" && data != "Sent" && data != "ControlTaken" && data != "SetupRound" && data != "Voted") {
-          // 1. Create the button
-          var button = document.createElement("button");
-          button.id = data;
-          button.innerHTML = data;
-          button.parentNode = document.getElementById("parentNode");
 
-          // 2. Append somewhere
-          var parentNode = document.getElementById("parentNode");
-          parentNode.appendChild(button);
-
-          // 3. Add event handler
-          button.addEventListener ("click", function() {
-            airconsole.message(AirConsole.SCREEN, {"vote": data});
-          });
+        #send {
+            /*display: none;*/
         }
-      };
 
-      if (!("ontouchstart" in document.createElement("div"))) {
-        var elements = document.getElementsByTagName("*");
-        for (var i = 0; i < elements.length; ++i) {
-          var element = elements[i];
-          var ontouchstart = element.getAttribute("ontouchstart");
-          if (ontouchstart) {
-            element.setAttribute("onmousedown", ontouchstart);
-          }
-          var ontouchend = element.getAttribute("ontouchend");
-          if (ontouchend) {
-            element.setAttribute("onmouseup", ontouchend);
-          }
+
+        #takeControl {
+            display: none;
         }
-      }
-    }
 
-    App.prototype.sendInputToScreen = function() {
-      if(document.getElementById("input").value != "") {
-        airconsole.message(AirConsole.SCREEN, {"input": document.getElementById("input").value});
-      }
-    }
 
-    App.prototype.sendMessageToScreen = function(msg) {
-      airconsole.message(AirConsole.SCREEN, {"action": msg});
-    }
+        body {
+            background-color: #f0e6d2; /* Parchment */
+            font-family: 'Garamond', serif;
+            margin: 0;
+            padding: 0;
+        }
 
-    App.prototype.onFromDevice = function(device_id, data) {
-      airconsole.message(AirConsole.SCREEN, {"action": data});
-    };
 
-    function displayGameModeChoices() {
-      // Show buttons or options for game mode selection
-      var gameModes = ['Truth and Lies', 'Find the Leader', 'Silent Assassin', 'Last Stand'];
-      var container = document.getElementById('game-mode-container');
-      container.innerHTML = ''; // Clear previous contents
-      gameModes.forEach(function (mode, index) {
-        var button = document.createElement('button');
-        button.textContent = mode;
-        button.onclick = function () {
-          airconsole.message(AirConsole.SCREEN, { action: "gameModeSelected", mode: index });
+        h1 {
+            text-align: center;
+            color: #3d2c1d; /* Dark Brown */
+            font-size: 42px;
+            margin-top: 10px;
+        }
+
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            margin-top: 0.5in; /* Adjust the margin-top as needed */
+            display: flex; /* Make it a flex container */
+            flex-direction: column; /* Align items vertically */
+            align-items: center; /* Center items horizontally */
+        }
+
+
+        #game-mode-container button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #b99f6c; /* Gold */
+            color: #3d2c1d; /* Dark Brown */
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+
+            #game-mode-container button:hover {
+                background-color: #8b774f; /* Dark Gold */
+            }
+
+
+        .hidden {
+            display: none;
+        }
+
+
+        .logo {
+            text-align: center;
+            margin-bottom: -10px;
+        }
+
+
+            .logo img {
+                width: 200px; /* Adjust the width as needed */
+            }
+
+
+        #inputForm {
+            text-align: center; /* Center the content horizontally */
+        }
+
+
+        #message {
+            display: none;
+            font-size: 20px;
+            color: #3d2c1d;
+            font-family: 'Garamond', serif;
+        }
+
+
+        #assassinMenu {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            display: none;
+            background-color: #b99f6c;
+        }
+
+
+        #voting-container, #game-mode-container {
+            display: none;
+        }
+
+
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #b99f6c; /* Gold */
+            color: #3d2c1d; /* Dark Brown */
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+
+            button:hover {
+                background-color: #8b774f; /* Dark Gold */
+            }
+
+
+        #promptDisplay, #message-display, #assassinMenu {
+            margin: 20px;
+            font-size: 20px;
+            font-family: 'Garamond', serif;
+        }
+    </style>
+
+
+    <script type="text/javascript">
+
+
+        var airconsole;
+        var playersData = [];
+
+
+        function App() {
+
+
+            /* JavaScript / Functionality. Add functions and evens here */
+
+
+            airconsole = new AirConsole({ "orientation": "portrait" });
+
+
+            airconsole.onMessage = function (device_id, data) {
+                if (data.action) {
+                    switch (data.action) {
+                        case "assignRole":
+                            document.getElementById('roleDisplay').innerText = "Your Role: " + data.role;
+                            document.getElementById('roleDisplay').style.display = 'block';
+                            break;
+                        case "Reset":
+                            document.getElementById('roleDisplay').style.display = 'none';
+                            // handle other actions as previously
+                            break;
+                        case "chooseGameMode":
+                            // Show UI elements for choosing the game mode
+                            displayGameModeChoices();
+                            break;
+                        case "wait":
+                            // Show a waiting message
+                            displayWaitMessage("Please wait for the game mode selection...");
+                            break;
+                        case "showAssassinMenu":
+                            // Make sure the current device is the assassin
+                            if (data.from === airconsole.getDeviceId()) {
+                                displayAssassinMenu(data.players);
+                            }
+                            break;
+                        case "hideGameModeSelection":
+                            hideGameModeSelection();  // Hide the game mode selection interface
+                            break;
+                        case "startVoting":
+                            if (data.players) {
+                                // Assume data includes list of players and the ID of the current player
+                                displayVotingOptions(data.players);
+                            }
+                            break;
+                        case "hideVoting":
+                            hideVotingOptions();
+                            break;
+                        case "updatePlayerData":
+                            updateLocalPlayerData(data.players);
+                        case "updatePlayerStatus":
+                            updatePlayerStatus(data.players);
+                            break;
+                        case "displayPrompt":
+                            document.getElementById('promptDisplay').textContent = data.prompt;
+                            document.getElementById('promptDisplay').style.display = 'block';
+                            break;
+                        case "showDeathScreen":
+                            if (device_id === airconsole.getDeviceId()) { // Make sure the message is for this device
+                                showDeathScreen();
+                            }
+                            break;
+                        case "allSet":
+                            document.getElementById('message-display').innerText = "All set!!";
+                            break;
+                    }
+                }
+
+
+                document.getElementById('takeControl').style.display = 'none';
+                if (data == "TakenControl") {
+                    document.getElementById('send').style.display = 'inline';
+                }
+                // Removes the voting buttons and shows the send button again
+                if (data == "Reset") {
+                    document.getElementById('send').style.display = 'inline';
+                    /*(document.getElementById('takeControl').style.display = 'inline';*/
+                    document.getElementById('parentNode').remove();
+                }
+                // Removes the send button after sending a message
+                if (data == "Sent") {
+                    document.getElementById('send').style.display = 'none';
+                }
+                // Removes the voting buttons after voting
+                if (data == "Voted") {
+                    document.getElementById('parentNode').remove();
+                }
+                // Adds a paragragh tag for the voting buttons to append to
+                if (data == "SetupRound") {
+                    var parentNode = document.createElement("p");
+                    parentNode.id = "parentNode";
+                    var body = document.getElementsByTagName("body")[0];
+                    body.appendChild(parentNode);
+                }
+                // Adds a voting button if the message isn't recognized
+                if (data != "Reset" && data != "TakenControl" && data != "Sent" && data != "ControlTaken" && data != "SetupRound" && data != "Voted") {
+                    // 1. Create the button
+                    var button = document.createElement("button");
+                    button.id = data;
+                    button.innerHTML = data;
+                    button.parentNode = document.getElementById("parentNode");
+
+
+                    // 2. Append somewhere
+                    var parentNode = document.getElementById("parentNode");
+                    parentNode.appendChild(button);
+
+
+                    // 3. Add event handler
+                    button.addEventListener("click", function () {
+                        airconsole.message(AirConsole.SCREEN, { "vote": data });
+                    });
+                }
+            };
+           
+            if (!("ontouchstart" in document.createElement("div"))) {
+                var elements = document.getElementsByTagName("*");
+                for (var i = 0; i < elements.length; ++i) {
+                    var element = elements[i];
+                    var ontouchstart = element.getAttribute("ontouchstart");
+                    if (ontouchstart) {
+                        element.setAttribute("onmousedown", ontouchstart);
+                    }
+                    var ontouchend = element.getAttribute("ontouchend");
+                    if (ontouchend) {
+                        element.setAttribute("onmouseup", ontouchend);
+                    }
+                }
+            }
+        }
+
+
+        App.prototype.sendInputToScreen = function () {
+            if (document.getElementById("input").value != "") {
+                airconsole.message(AirConsole.SCREEN, { "input": document.getElementById("input").value });
+            }
+        }
+
+
+        App.prototype.sendMessageToScreen = function (msg) {
+            airconsole.message(AirConsole.SCREEN, { "action": msg });
+        }
+
+
+        App.prototype.onFromDevice = function (device_id, data) {
+            airconsole.message(AirConsole.SCREEN, { "action": data });
         };
-        container.appendChild(button);
-      });
-      container.classList.remove('hidden'); // Make the container visible
-    }
 
-    function displayWaitMessage(message) {
-      // Display a waiting message while other player chooses the game mode
-      var messageDiv = document.getElementById('message');
-      messageDiv.textContent = message;
-      messageDiv.classList.remove('hidden'); // Make the message visible
-      document.getElementById('game-mode-container').classList.add('hidden'); // Hide game mode choices
-    }
 
-    function hideGameModeSelection() {
-      var container = document.getElementById('game-mode-container');
-      container.classList.add('hidden');  // Hide the game mode selection container
-      var messageDiv = document.getElementById('message');
-      messageDiv.classList.add('hidden');  // Optionally hide the message as well
-    }
-
-    // Function to display the assassin's choice menu
-    function displayAssassinMenu(players) {
-      var menu = document.getElementById('assassinMenu');
-      menu.innerHTML = ''; // Clear the menu first
-
-      players.forEach(player => {
-        let button = document.createElement('button');
-        button.textContent = 'Kill ' + player.name;
-        button.onclick = () => sendAssassinChoice(player.id);
-        menu.appendChild(button);
-      });
-
-      // Display the menu to the assassin
-      menu.classList.remove('hidden');
-    }
-
-    function sendAssassinChoice(playerId) {
-      airconsole.message(AirConsole.SCREEN, { action: "assassinKill", playerId: playerId });
-    }
-
-    function displayVotingOptions(currentPlayerId) {
-      var votingContainer = document.getElementById('voting-container');
-      votingContainer.innerHTML = ''; // Clear previous voting options
-
-      playersData.forEach(function (player) {
-        if (player.id !== currentPlayerId) {
-          var voteButton = document.createElement('button');
-          voteButton.textContent = 'Vote for ' + player.name; // Use the name from the updated player data
-          voteButton.onclick = function () {
-            airconsole.message(AirConsole.SCREEN, { action: "vote", votedPlayerId: player.id });
-            hideVotingOptions();
-          };
-          votingContainer.appendChild(voteButton);
+        function displayGameModeChoices() {
+            // Show buttons or options for game mode selection
+            var gameModes = ['Truth and Lies', 'Point Break', 'Peak or Plummet', 'Count Me In'];
+            var container = document.getElementById('game-mode-container');
+            container.innerHTML = ''; // Clear previous contents
+            gameModes.forEach(function (mode, index) {
+                var button = document.createElement('button');
+                button.textContent = mode;
+                button.onclick = function () {
+                    airconsole.message(AirConsole.SCREEN, { action: "gameModeSelected", mode: index });
+                };
+                container.appendChild(button);
+            });
+            container.style.display = 'block'; // Make the container visible
         }
-      });
 
-      votingContainer.classList.remove('hidden'); // Show the voting options
-    }
 
-    function hideVotingOptions() {
-      var votingContainer = document.getElementById('voting-container');
-      votingContainer.classList.add('hidden');
-    }
-
-    function onDocumentReady() {
-      airconsole = new AirConsole();
-
-      airconsole.onMessage = function (device_id, data) {
-        if (data.action === "requestInfo") {
-          displayQuestions(data.questions);
-        } else if (data.action === "allSet") {
-          document.getElementById('message').innerText = "All set!!";
-          document.getElementById('inputForm').classList.add('hidden');
+        function displayWaitMessage(message) {
+            // Display a waiting message while other player chooses the game mode
+            var messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block'; // Make the message visible
+            document.getElementById('game-mode-container').style.display = 'none'; // Hide game mode choices
         }
-      };
-    }
 
-    function displayQuestions(questions) {
-      var formHtml = 'Name: <input type="text" id="name"><br>';
-      formHtml += questions[0] + ': <input type="text" id="answer1"><br>';
-      formHtml += questions[1] + ': <input type="text" id="answer2"><br>';
-      formHtml += '<button onclick="submitInfo()">Submit</button>';
-      document.getElementById('inputForm').innerHTML = formHtml;
-      document.getElementById('inputForm').classList.remove('hidden'); // Display the input form
-    }
 
-    function updateLocalPlayerData(players) {
-      playersData = players;
-      updateVotingOptions();  // Call this function to refresh the UI whenever player data is updated
-    }
+        function hideGameModeSelection() {
+            var container = document.getElementById('game-mode-container');
+            container.style.display = 'none';  // Hide the game mode selection container
+            var messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'none';  // Optionally hide the message as well
+        }
 
-    function submitInfo() {
-      var name = document.getElementById('name').value;
-      var answer1 = document.getElementById('answer1').value;
-      var answer2 = document.getElementById('answer2').value;
-      airconsole.message(AirConsole.SCREEN, {
-        action: "submitInfo",
-        name: name,
-        answer1: answer1,
-        answer2: answer2
-      });
-    }
 
-    document.addEventListener("DOMContentLoaded", onDocumentReady);
-  </script>
+        function displayAssassinMenu(players) {
+            var menu = document.getElementById('assassinMenu');
+            menu.innerHTML = '';  // Clear existing buttons
+
+
+            players.forEach(function (player) {
+                var button = document.createElement('button');
+                button.textContent = 'Kill ' + player.name;
+                button.onclick = function () {
+                    airconsole.message(AirConsole.SCREEN, { action: "assassinKill", playerId: player.id });
+                    menu.innerHTML = '';
+                };
+                menu.appendChild(button);
+            });
+
+
+            menu.style.display = 'block';  // Make sure to display the menu
+        }
+
+
+        function sendAssassinChoice(playerId) {
+            airconsole.message(AirConsole.SCREEN, { action: "assassinKill", playerId: playerId });
+        }
+
+
+        function displayVotingOptions(currentPlayerId) {
+            var votingContainer = document.getElementById('voting-container');
+            votingContainer.innerHTML = ''; // Clear previous voting options
+            promptDisplay.textContent = '';
+            playersData.forEach(function (player) {
+                if (player.id !== currentPlayerId) {
+                    var voteButton = document.createElement('button');
+                    voteButton.textContent = 'Vote for ' + player.name; // Use the name from the updated player data
+                    voteButton.onclick = function () {
+                        airconsole.message(AirConsole.SCREEN, { action: "vote", votedPlayerId: player.id });
+                        hideVotingOptions();
+                    };
+                    votingContainer.appendChild(voteButton);
+                }
+            });
+
+
+            votingContainer.style.display = 'block'; // Show the voting options
+        }
+
+
+        function hideVotingOptions() {
+            var votingContainer = document.getElementById('voting-container');
+            votingContainer.style.display = 'none';
+        }
+
+
+        function onDocumentReady() {
+            airconsole = new AirConsole();
+
+
+            airconsole.onMessage = function (device_id, data) {
+                if (data.action === "requestInfo") {
+                    displayQuestions(data.questions);
+                } else if (data.action === "allSet") {
+                    document.getElementById('message').innerText = "All set!!";
+                    document.getElementById('inputForm').style.display = 'none';
+                }
+            };
+        }
+
+
+        //TruthandLiesGamemode
+        function displayPrompt(message) {
+            var promptContainer = document.getElementById('promptContainer');
+            promptContainer.innerHTML = message;
+            promptContainer.style.display = 'block';
+        }
+
+
+
+
+
+
+        function displayQuestions(questions) {
+            var formHtml = 'Name: <input type="text" id="name"><br>';
+            formHtml += questions[0] + ': <input type="text" id="answer1"><br>';
+            formHtml += questions[1] + ': <input type="text" id="answer2"><br>';
+            formHtml += '<button onclick="submitInfo()">Submit</button>';
+            document.getElementById('inputForm').innerHTML = formHtml;
+        }
+
+
+        function showDeathScreen() {
+            document.getElementById('message').innerText = "You are dead.";
+            document.getElementById('message').style.display = 'block';
+
+
+            // Hide other gameplay elements
+            document.getElementById('game-mode-container').style.display = 'none';
+            document.getElementById('voting-container').style.display = 'none';
+        }
+
+
+        function updateLocalPlayerData(players) {
+            playersData = players;
+            updateVotingOptions();  // Call this function to refresh the UI whenever player data is updated
+        }
+
+
+        function submitInfo() {
+            var name = document.getElementById('name').value;
+            var answer1 = document.getElementById('answer1').value;
+            var answer2 = document.getElementById('answer2').value;
+            airconsole.message(AirConsole.SCREEN, {
+                action: "submitInfo",
+                name: name,
+                answer1: answer1,
+                answer2: answer2
+            });
+        }
+        document.addEventListener("DOMContentLoaded", onDocumentReady);
+
+
+
+
+    </script>
 </head>
-<body>
-  <div class="container">
-<<<<<<< Updated upstream
-=======
-    <div class="logo">
-        <img src="https://raw.githubusercontent.com/Devlandry2332/CapstoneSocialDeduction/main/Assets/Logo1.png.png" alt="Your Logo">
+<body onload="window.app = new App()">
+    <!-- Add your HTML elements here -->
 
+
+    <div class="container">
+        <div class="logo">
+            <img src="https://raw.githubusercontent.com/Devlandry2332/CapstoneSocialDeduction/main/Assets/Logo1.png.png" alt="Your Logo">
+
+
+        </div>
+        <h1>Cloak & Dagger</h1>
+        <div id="roleDisplay" style="display:none;"></div>
+        <div id="game-mode-container" style="display: none;"></div>
+        <div id="message" style="display: none;"></div>
+        <div id="voting-container" style="display: none;"></div>
+        <div id="inputForm"></div>
+        <div id="assassinMenu" style="display:none;"></div>
+        <div id="promptDisplay" style="display: none;"></div>
     </div>
->>>>>>> Stashed changes
-    <h1>Cloak & Dagger</h1>
-    <div id="roleDisplay" class="hidden"></div>
-    <div id="game-mode-container" class="hidden"></div>
-    <div id="message" class="hidden"></div>
-    <div id="voting-container" class="hidden"></div>
-<<<<<<< Updated upstream
-    <div id="inputForm" class="hidden"></div> 
-=======
-    <div id="inputForm" class="hidden inputForm"></div>
->>>>>>> Stashed changes
-    <div id="assassinMenu" class="hidden"></div>
-  </div>
 </body>
 </html>
