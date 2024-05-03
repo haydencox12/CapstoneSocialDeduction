@@ -85,7 +85,7 @@ public class GameLogic : MonoBehaviour
         avatars.Add(avatarClone);
         playerAvatars[device_id] = avatarClone;
         
-        RepositionList(avatars, 50);
+        RepositionList(avatars, 70);
         JObject message = new JObject();
         message["action"] = "requestInfo";
         message["questions"] = GetRandomQuestions();
