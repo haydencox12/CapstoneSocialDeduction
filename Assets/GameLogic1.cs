@@ -8,6 +8,7 @@ using System.Linq;
 using System;
 using System.ComponentModel;
 using System.Security.Cryptography;
+using UnityEngine.SceneManagement;
 //using UnityEditor.VersionControl;
 //using static UnityEngine.GraphicsBuffer;
 //using System.Security.Cryptography;
@@ -86,7 +87,7 @@ public class GameLogic : MonoBehaviour
         avatars.Add(avatarClone);
         playerAvatars[device_id] = avatarClone;
         
-        RepositionList(avatars, 70);
+        RepositionList(avatars, 50);
         JObject message = new JObject();
         message["action"] = "requestInfo";
         message["questions"] = GetRandomQuestions();
@@ -114,12 +115,7 @@ public class GameLogic : MonoBehaviour
             {
                 outputText.text = "message from " + fromDeviceID + ", data: " + data;
             }
-            if (data["action"].ToString().Equals("takeControl"))
-            {
-                controllingID = fromDeviceID;
-                SendBroadcast("ControlTaken");
-                SendMessageToDevice(controllingID, "TakenControl");
-            }
+            
         }
         if(data ["input"] != null)
         {
@@ -129,7 +125,7 @@ public class GameLogic : MonoBehaviour
                 answerClone.GetComponentInChildren<TextMeshProUGUI>().text = data["input"].ToString();
                 answers.Add(answerClone);
                 RepositionList(answers, Screen.height / 2);
-                SendMessageToDevice(fromDeviceID, "Sent");
+               
                 SendBroadcast(data["input"].ToString());
             }
             else
@@ -154,19 +150,17 @@ public class GameLogic : MonoBehaviour
         }
 
 
-        if (data["action"] != null && data["action"].ToString() == "vote")
+        if (data["action"] != null && data["action"].ToString() == "vote" && !playerDead[fromDeviceID])
         {
-            int voterId = fromDeviceID;
-            int votedPlayerId = (int)data["votedPlayerId"]; // Ensure the data contains the player ID being voted for
-
-
-            // Check if this voter has already voted to prevent double voting
-            if (!votes.ContainsKey(voterId))
+            int votedPlayerId = (int)data["votedPlayerId"];
+            if (!playerDead[votedPlayerId]) // Ensure both voter and voted are alive
             {
-                votes[voterId] = votedPlayerId;
+                votes[fromDeviceID] = votedPlayerId;
                 CheckIfAllVotesAreIn();
             }
         }
+    
+            
 
 
         if (data["action"] != null && data["action"].ToString() == "submitInfo")
@@ -209,19 +203,8 @@ public class GameLogic : MonoBehaviour
 
 
 
-        if (data["vote"] != null)
-        {
-            int i = 0;
-            foreach(GameObject answer in answers)
-            {
-                if(answer.GetComponentInChildren<TextMeshProUGUI>().text.Equals(data["vote"].ToString()))
-                {
-                    votes[i]++;
-                }
-                i++;
-            }
-            SendMessageToDevice(fromDeviceID, "Voted");
-        }
+        
+        
     }
 
 
@@ -278,9 +261,16 @@ public class GameLogic : MonoBehaviour
     }
 
 
-    void SendMessageToDevice(int deviceID, JToken data)
+    void SendMessageToDevice(int deviceID, JObject data)
     {
-        AirConsole.instance.Message(deviceID, data);
+        if (!playerDead[deviceID])  // Check if player is not marked as dead
+        {
+            AirConsole.instance.Message(deviceID, data);
+        }
+        else
+        {
+            Debug.Log("Attempted to send message to a dead player: " + deviceID);
+        }
     }
 
 
@@ -518,14 +508,10 @@ public class GameLogic : MonoBehaviour
 
     void CheckIfAllVotesAreIn()
     {
-        if (votes.Count == numPlayers)
-        { // Ensure all connected players have voted
-          // Determine the player with the most votes
-            var mostVotedPlayer = votes.GroupBy(v => v.Value)
-                                       .OrderByDescending(gp => gp.Count())
-                                       .First()
-                                       .Key;
-            bool isAssassin = playerRoles[mostVotedPlayer] == "Assassin";
+        var alivePlayerIDs = playerNames.Keys.Where(id => !playerDead[id]).ToList();
+
+        if (votes.Keys.Count == alivePlayerIDs.Count && votes.Keys.All(id => alivePlayerIDs.Contains(id)))
+        {
             ProcessVotingResult();
         }
     }
@@ -539,24 +525,25 @@ public class GameLogic : MonoBehaviour
             return;
         }
 
-        // Calculate which player has the most votes
+        // Calculate the most voted player
         var mostVotedPlayerId = votes
-            .GroupBy(v => v.Value) // Group by the voted player ID
-            .OrderByDescending(g => g.Count()) // Order by the number of votes
-            .First().Key; // Get the ID of the player with the most votes
+            .GroupBy(v => v.Value)
+            .OrderByDescending(g => g.Count())
+            .First().Key;
 
         bool isAssassin = playerRoles[mostVotedPlayerId] == "Assassin";
 
         if (isAssassin)
         {
             outputText.text = $"The Assassin was caught. Game over. The players win!";
-            EndGame(); // Players win because the Assassin was caught
+            EndGame();
         }
         else
         {
             outputText.text = $"Player {playerNames[mostVotedPlayerId]} was not the Assassin.";
-            ProceedWithAssassinAction();
+            ProceedWithAssassinAction(); // This should also only affect alive players
         }
+
     }
 
 
@@ -564,13 +551,15 @@ public class GameLogic : MonoBehaviour
     private int pendingAssassinKill = -1;
     void KillPlayer(int targetPlayerId, int assassinId)
     {
+
         playerDead[targetPlayerId] = true;
+        SendGameOverScreen(targetPlayerId);
         string targetName = playerNames[targetPlayerId];
 
         if (playerRoles[targetPlayerId] == "Leader")
         {
-            outputText.text = $"{targetName}, the Leader, has been killed by the Assassin. The Assassin wins!";
-            EndGame(); // Assassin wins because they killed the leader
+            outputText.text = $"{targetName}, the Leader, has been killed. The Assassin wins!";
+            Restart();
         }
         else
         {
@@ -591,39 +580,35 @@ public class GameLogic : MonoBehaviour
 
     void StartVoting()
     {
-        outputText.text = "Voting has started. Look at your screens to vote.";
-        // Iterate through each player to send them personalized voting data
-        foreach (var currentPlayer in playerNames)
+        votes.Clear();
+        var alivePlayers = playerNames.Where(p => !playerDead[p.Key])
+                                      .Select(p => new { id = p.Key, name = p.Value })
+                                      .ToList();
+
+        List<JObject> playerData = new List<JObject>();
+        foreach (var player in alivePlayers)
         {
-            if (!playerDead[currentPlayer.Key]) // Ensure the player is alive
-            {
-                List<JObject> playerData = new List<JObject>();
-                // Create a list excluding the current player
-                foreach (var potentialVoteTarget in playerNames)
-                {
-                    if (potentialVoteTarget.Key != currentPlayer.Key && !playerDead[potentialVoteTarget.Key])
-                    {
-                        playerData.Add(new JObject {
-                        {"id", potentialVoteTarget.Key},
-                        {"name", potentialVoteTarget.Value}
-                    });
-                    }
-                }
-
-
-                // Send the personalized list to the current player
-                JObject message = new JObject
-                {
-                    ["action"] = "startVoting",
-                    ["players"] = new JArray(playerData)
-                };
-                AirConsole.instance.Message(currentPlayer.Key, message);
-            }
+            playerData.Add(new JObject {
+            {"id", player.id},
+            {"name", player.name}
+        });
         }
 
+        // Broadcast voting options to all alive players
+        JObject message = new JObject
+        {
+            ["action"] = "startVoting",
+            ["players"] = new JArray(playerData)
+        };
+        BroadcastToAlivePlayers(message);
+    }
 
-        int assassinId = playerRoles.FirstOrDefault(x => x.Value == "Assassin").Key;
-     
+    void BroadcastToAlivePlayers(JObject message)
+    {
+        foreach (var deviceId in AirConsole.instance.GetControllerDeviceIds().Where(id => !playerDead[id]))
+        {
+            AirConsole.instance.Message(deviceId, message);
+        }
     }
 
 
@@ -669,7 +654,7 @@ public class GameLogic : MonoBehaviour
 
             outputText.text = "The Assassin has been found. Game over.";
             yield return new WaitForSeconds(3);
-            // Optionally reset the game or return to main menu
+            Restart();
         }
         else
         {
@@ -681,6 +666,11 @@ public class GameLogic : MonoBehaviour
         }
     }
 
+    private void Restart()
+    {
+        AirConsole.instance.Broadcast(new { action = "reset" });
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 
     void RepositionList(List<GameObject> list, float height)
     {
@@ -701,15 +691,12 @@ public class GameLogic : MonoBehaviour
             GameObject avatar = playerAvatars[playerId];
             Destroy(avatar);  // Remove the avatar from the scene
             playerAvatars.Remove(playerId);  // Clean up the dictionary
+            
         }
 
-
-        // Send a message to the player's device to show the "Game Over" screen
-        SendGameOverScreen(playerId);
     }
 
-
-    void SendGameOverScreen(int playerId)
+    private void SendGameOverScreen(int playerId)
     {
         JObject message = new JObject
         {
@@ -778,12 +765,12 @@ public class GameLogic : MonoBehaviour
             };
 
 
+       
 
 
 
-
-    // Randomize prompts or select a specific one
-    var selectedPrompt = truthAndLiesPrompts[UnityEngine.Random.Range(0, truthAndLiesPrompts.Count)];
+        // Randomize prompts or select a specific one
+        var selectedPrompt = truthAndLiesPrompts[UnityEngine.Random.Range(0, truthAndLiesPrompts.Count)];
 
 
         // Broadcast the selected prompt to all players except the assassin
@@ -876,6 +863,8 @@ public class GameLogic : MonoBehaviour
         // Start a countdown before showing "GO!"
         StartCoroutine(ShowGoCountdown());
     }
+
+    
 
 
     void StartPeakorPlummetMode()

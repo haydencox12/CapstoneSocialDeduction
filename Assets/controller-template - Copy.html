@@ -174,9 +174,10 @@
                             document.getElementById('roleDisplay').style.display = 'block';
                             break;
                         case "Reset":
-                            document.getElementById('roleDisplay').style.display = 'none';
-                            // handle other actions as previously
-                            break;
+                            if (data.action === "reset") {
+                                handleReset();
+                            }
+                                break;
                         case "chooseGameMode":
                             // Show UI elements for choosing the game mode
                             displayGameModeChoices();
@@ -212,9 +213,11 @@
                             document.getElementById('promptDisplay').textContent = data.prompt;
                             document.getElementById('promptDisplay').style.display = 'block';
                             break;
-                        case "showDeathScreen":
-                            if (device_id === airconsole.getDeviceId()) { // Make sure the message is for this device
-                                showDeathScreen();
+                        case "showGameOverScreen":
+                            if (data.playerId === airconsole.getDeviceId()) {
+                                showGameOverScreen();
+                            } else {
+                                removePlayerFromScreen(data.playerId);
                             }
                             break;
                         case "allSet":
@@ -363,30 +366,37 @@
         }
 
 
-        function displayVotingOptions(currentPlayerId) {
-            var votingContainer = document.getElementById('voting-container');
-            votingContainer.innerHTML = ''; // Clear previous voting options
-            promptDisplay.textContent = '';
-            playersData.forEach(function (player) {
-                if (player.id !== currentPlayerId) {
-                    var voteButton = document.createElement('button');
-                    voteButton.textContent = 'Vote for ' + player.name; // Use the name from the updated player data
+        function displayVotingOptions(players) {
+            const votingContainer = document.getElementById('voting-container');
+            votingContainer.innerHTML = '';  // Clear existing buttons
+
+            players.forEach(player => {
+                if (player.id !== airconsole.getDeviceId()) {  // Don't show button for self
+                    const voteButton = document.createElement('button');
+                    voteButton.innerText = `Vote for ${player.name}`;
                     voteButton.onclick = function () {
                         airconsole.message(AirConsole.SCREEN, { action: "vote", votedPlayerId: player.id });
-                        hideVotingOptions();
+                        hideVotingOptions()
                     };
                     votingContainer.appendChild(voteButton);
                 }
+            votingContainer.style.display = 'block';
             });
-
-
-            votingContainer.style.display = 'block'; // Show the voting options
         }
 
 
         function hideVotingOptions() {
             var votingContainer = document.getElementById('voting-container');
             votingContainer.style.display = 'none';
+        }
+
+        function updatePlayerStatus(players) {
+            // Assuming 'players' is an array of player objects with 'id' and 'alive' status
+            players.forEach(player => {
+                if (!player.alive) {
+                    document.getElementById(`player-${player.id}`).classList.add('dead');
+                }
+            });
         }
 
 
@@ -412,7 +422,13 @@
             promptContainer.style.display = 'block';
         }
 
+        function handleReset() {
+            // Perform any cleanup or UI reset
+            console.log("The game has been reset. Please reconnect.");
 
+            // You could also redirect to a "rejoin" screen or simply reload the page
+            window.location.reload();
+        }
 
 
 
@@ -425,23 +441,25 @@
             document.getElementById('inputForm').innerHTML = formHtml;
         }
 
-
-        function showDeathScreen() {
-            document.getElementById('message').innerText = "You are dead.";
-            document.getElementById('message').style.display = 'block';
-
-
-            // Hide other gameplay elements
-            document.getElementById('game-mode-container').style.display = 'none';
+        function showGameOverScreen() {
+            // Display game over message
+            document.getElementById('game-over-screen').style.display = 'block';
             document.getElementById('voting-container').style.display = 'none';
+            document.getElementById('game-mode-container').style.display = 'none';
         }
-
+        
 
         function updateLocalPlayerData(players) {
             playersData = players;
             updateVotingOptions();  // Call this function to refresh the UI whenever player data is updated
         }
 
+        function removePlayerFromScreen(playerId) {
+            const playerElement = document.getElementById(`player-${playerId}`);
+            if (playerElement) {
+                playerElement.style.display = 'none'; // Or any other indication
+            }
+        }
 
         function submitInfo() {
             var name = document.getElementById('name').value;
@@ -479,6 +497,10 @@
         <div id="inputForm"></div>
         <div id="assassinMenu" style="display:none;"></div>
         <div id="promptDisplay" style="display: none;"></div>
+        <div id="game-over-screen" style="display: none;">
+            <h1>Game Over</h1>
+            <p>You have been eliminated.</p>
+        </div>
     </div>
 </body>
 </html>
