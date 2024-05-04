@@ -7,6 +7,7 @@ using TMPro;
 using System.Linq;
 using System;
 using System.ComponentModel;
+using System.Security.Cryptography;
 //using UnityEditor.VersionControl;
 //using static UnityEngine.GraphicsBuffer;
 //using System.Security.Cryptography;
@@ -417,9 +418,11 @@ public class GameLogic : MonoBehaviour
         }
     }
 
-
-
-
+    void ProceedWithAssassinAction()
+    {
+        int assassinId = playerRoles.FirstOrDefault(x => x.Value == "Assassin").Key;
+        SendAssassinMenu(assassinId); // Display the Assassin menu to allow them to choose a target
+    }
 
 
     void AssignRoles()
@@ -523,80 +526,68 @@ public class GameLogic : MonoBehaviour
                                        .First()
                                        .Key;
             bool isAssassin = playerRoles[mostVotedPlayer] == "Assassin";
-            ProcessVotingResult(mostVotedPlayer, isAssassin);
+            ProcessVotingResult();
         }
     }
 
 
-    void ProcessVotingResult(int playerId, bool isAssassin)
+    void ProcessVotingResult()
     {
-        // Check if the player ID exists in the dictionary to prevent errors
-        if (playerNames.ContainsKey(playerId))
-
-
+        if (votes.Count == 0)
         {
-            string playerName = playerNames[playerId];
-            if (isAssassin)
-            {
-                outputText.text = $"Player {playerName} received the most votes. They are {(isAssassin ? "" : "not ")}the assassin.";
-            }
-            else
-            {
-                outputText.text = $"Player {playerName} received the most votes. They are {(isAssassin ? "" : "not ")}the assassin.";
-                CheckAssassinAttackOutcome(playerId, isAssassin);
-
-
-            }
-
-
-            if (!isAssassin && !playerDead[playerId])
-            {
-                int leaderId = playerRoles.FirstOrDefault(x => x.Value == "Leader").Key;
-                int assassinId = playerRoles.FirstOrDefault(x => x.Value == "Assassin").Key;
-
-
-                if (leaderId != 0 && assassinId != 0)
-                {
-                    SendQuestionsToEachOther(leaderId, assassinId);
-                }
-            }
-            // Access the player's name using the playerId as the key in the dictionary
-
-
+            outputText.text = "No votes cast.";
+            return;
         }
 
+        // Calculate which player has the most votes
+        var mostVotedPlayerId = votes
+            .GroupBy(v => v.Value) // Group by the voted player ID
+            .OrderByDescending(g => g.Count()) // Order by the number of votes
+            .First().Key; // Get the ID of the player with the most votes
 
-        void CheckAssassinAttackOutcome(int votedPlayerId, bool isAssassin)
+        bool isAssassin = playerRoles[mostVotedPlayerId] == "Assassin";
+
+        if (isAssassin)
         {
-            int assassinId = playerRoles.FirstOrDefault(p => p.Value == "Assassin").Key;
-            int leaderId = playerRoles.FirstOrDefault(p => p.Value == "Leader").Key;
-
-
-            if (assassinId != leaderId && !isAssassin)
-            {
-                // Assassin did not kill the leader and was not found, exchange questions
-                SendQuestions(assassinId, leaderId);
-            }
+            outputText.text = $"The Assassin was caught. Game over. The players win!";
+            EndGame(); // Players win because the Assassin was caught
         }
-
-
-        StartCoroutine(DisplayResults(isAssassin));
-
-
-        if (pendingAssassinKill != -1)
+        else
         {
-            ConfirmAssassinKill(pendingAssassinKill);
-            pendingAssassinKill = -1;  // Reset for next round
+            outputText.text = $"Player {playerNames[mostVotedPlayerId]} was not the Assassin.";
+            ProceedWithAssassinAction();
         }
     }
+
 
 
     private int pendingAssassinKill = -1;
     void KillPlayer(int targetPlayerId, int assassinId)
     {
-        pendingAssassinKill = targetPlayerId;
+        playerDead[targetPlayerId] = true;
+        string targetName = playerNames[targetPlayerId];
+
+        if (playerRoles[targetPlayerId] == "Leader")
+        {
+            outputText.text = $"{targetName}, the Leader, has been killed by the Assassin. The Assassin wins!";
+            EndGame(); // Assassin wins because they killed the leader
+        }
+        else
+        {
+            outputText.text = $"{targetName} has been killed.";
+            UpdateGameAfterDeath(targetPlayerId);
+            StartGameModeSelection();
+        }
     }
 
+    void EndGame()
+    {
+        // Here you can handle things like disabling player inputs, showing final scores, etc.
+        
+        // Optionally reset the game or go back to the main menu
+        // This could involve reloading the scene, clearing data, etc.
+        // Example: SceneManager.LoadScene("MainMenu");
+    }
 
     void StartVoting()
     {
@@ -632,7 +623,7 @@ public class GameLogic : MonoBehaviour
 
 
         int assassinId = playerRoles.FirstOrDefault(x => x.Value == "Assassin").Key;
-        SendAssassinMenu(assassinId);
+     
     }
 
 
@@ -664,9 +655,6 @@ public class GameLogic : MonoBehaviour
         // Further process like updating UI or game states
         UpdateGameAfterDeath(targetPlayerId);
     }
-
-
-
 
 
 
